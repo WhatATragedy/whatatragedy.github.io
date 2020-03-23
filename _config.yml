@@ -1,10 +1,10 @@
 # Website details
-name: Name
-description: Description
+name: Alex
+description: I love a good bit of networking
 email: email@site.com
-author: author
+author: Alex
 lang: en
-locale: en_US
+locale: en_GB
 
 # Jekyll
 paginate: 10
