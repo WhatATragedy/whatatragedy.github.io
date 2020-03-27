@@ -2,7 +2,6 @@
 layout: article
 title: How The Internet Works
 date: 2020-03-27 09:39:00+0200
-coverPhoto: ../../../contents/images/2020/03/internet.jpeg
 ---
 ## IP Addressing and the Internet 
 When you buy internet from an Internet Service Provider (ISP), they send you a router, and plug that into the wall, boom, you're now on the internet. Underneath the hood a lot of parts come together to enable that. When you plug into the service provider network, they will dynamically assign you an IP address. This is your internet identifier, anyone wants to speak to you, they use this, but, how do you know where anything is? all you done was plug in a cable, how does that magically give you access to everything? How do you speak to Netflix? Amazon?
