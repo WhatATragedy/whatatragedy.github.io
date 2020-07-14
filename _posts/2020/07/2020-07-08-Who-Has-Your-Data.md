@@ -63,6 +63,7 @@ Now I needed a way to classify if a link was an advert or not. I didn't want to 
 So now I had a way of querying the top million domains, adding all of their external links to a list, and checking it against known advertising domains. So that's exactly what I did for 100,000 of the top websites according to Cisco Umbrella.
 So what was the answer... Well here are the top 20.
 
+
 **Advertising Domain**|**Count**
 :-----:|:-----:
 www.google-analytics.com|652
