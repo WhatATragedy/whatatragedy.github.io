@@ -59,28 +59,28 @@ Now I needed a way to classify if a link was an advert or not. I didn't want to 
 So now I had a way of querying the top million domains, adding all of their external links to a list, and checking it against known advertising domains. So that's exactly what I did for 100,000 of the top websites according to Cisco Umbrella.
 So what was the answer... Well here are the top 20.
 
-| Advertising Domain             	| Count 	|
-|--------------------------------	|-------	|
-| www.google-analytics.com       	|   652 	|
-| www.googletagmanager.com       	|   559 	|
-| www.googleadservices.com       	|   214 	|
-| googleads.g.doubleclick.net    	|   185 	|
-| bat.bing.com                   	|   105 	|
-| ssl.google-analytics.com       	|    93 	|
-| analytics.twitter.com          	|    85 	|
-| static.ads-twitter.com         	|    79 	|
-| munchkin.marketo.net           	|    77 	|
-| adservice.google.com           	|    68 	|
-| js-agent.newrelic.com          	|    56 	|
-| securepubads.g.doubleclick.net 	|    54 	|
-| www.googletagservices.com      	|    52 	|
-| hm.baidu.com                   	|    45 	|
-| cdn.optimizely.com             	|    39 	|
-| cdn.bizible.com                	|    38 	|
-| script.crazyegg.com            	|    36 	|
-| tags.tiqcdn.com                	|    34 	|
-| js.adsrvr.org                  	|    34 	|
-| sb.scorecardresearch.com       	|    34 	|
+**Advertising Domain**|**Count**
+:-----:|:-----:
+www.google-analytics.com|652
+www.googletagmanager.com|559
+www.googleadservices.com|214
+googleads.g.doubleclick.net|185
+bat.bing.com|105
+ssl.google-analytics.com|93
+analytics.twitter.com|85
+static.ads-twitter.com|79
+munchkin.marketo.net|77
+adservice.google.com|68
+js-agent.newrelic.com|56
+securepubads.g.doubleclick.net|54
+www.googletagservices.com|52
+hm.baidu.com|45
+cdn.optimizely.com|39
+cdn.bizible.com|38
+script.crazyegg.com|36
+tags.tiqcdn.com|34
+js.adsrvr.org|34
+sb.scorecardresearch.com|34
 
 There is still more work that needs to be done, if the domain doesn't start with http or https I drop it, but as seen in the output from news now that elimates some results '//ib.adnxs.com/' and there is no facebook here, I don't know where their ad exchanges are hiding.
 
