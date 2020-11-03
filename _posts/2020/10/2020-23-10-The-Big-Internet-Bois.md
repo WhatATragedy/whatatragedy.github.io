@@ -6,13 +6,74 @@ coverPhoto: /contents/images/2020/10/Internet_Bois.png
 ---
 ![](/contents/images/2020/10/Internet_Bois.png)
 # Once Upon a time on the Internet
-Back long ago, the internet was quite small and made of HTML pages. A lot has changed since then. If we have a look back at Routeviews IP to Prefix mapping from 2005, we can see who some of the bigger ISPs were back then.
- 
-ADD Some DATA Here from http://data.caida.org/datasets/routing/routeviews-prefix2as/2005/12/
+Back long ago, the internet was quite small and made of HTML pages. A lot has changed since then. If we have a look back at Routeviews IP to Prefix mapping from 2005, we can see who some of the bigger ISPs were back then. AT&T was big and some of the biggest IP Space advertisers are the same as now.
+
+December 2005 IP Space Owners.
+
+| ASN   	| Hosts Sum 	| Unique Prefix Count 	| Name                                                       	|
+|-------	|-----------	|---------------------	|------------------------------------------------------------	|
+|   721 	|  91318784 	|                1056 	| DoD Network Information Center                             	|
+|  3356 	|  43552256 	|                 497 	| Level 3 Parent                                             	|
+|  7018 	|  42561793 	|                1455 	| AT&T Services                                              	|
+|  4134 	|  39326080 	|                1019 	| CHINANET-BACKBONE                                          	|
+|   714 	|  35786496 	|                  32 	| APPLE-ENGINEERING                                          	|
+|   701 	|  35059200 	|                5285 	| MCI Communications Services, Inc. d/b/a Verizon Business   	|
+| 17676 	|  27970048 	|                 470 	| Softbank BB Corp.                                          	|
+|   174 	|  23576320 	|                1051 	| COGENT-174                                                 	|
+|  7132 	|  22628352 	|                 468 	| AT&T Corp.                                                 	|
+|    71 	|  20471808 	|                  87 	| HP-INTERNET-AS                                             	|
+|   237 	|  18594720 	|                 170 	| MERIT-AS-14                                                	|
+|  2381 	|  18372608 	|                  35 	| WISCNET1-AS                                                	|
+|  2686 	|  17890832 	|                 457 	| AT&T Global Network Services                               	|
+|  2647 	|  17559157 	|                 100 	| Societe Internationale de Telecommunications Aeronautiques 	|
+
+November 2020 IP Space Owners.
+
+| ASN   	| Hosts Sum 	| Unique Prefix Count 	| Name                                                     	|
+|-------	|-----------	|---------------------	|----------------------------------------------------------	|
+|  7018 	| 115894529 	|                1753 	| AT&T Services                                            	|
+|  4134 	| 115514368 	|                 818 	| CHINANET-BACKBONE                                        	|
+|   721 	|  74855936 	|                 278 	| DoD Network Information Center                           	|
+|  7922 	|  71336960 	|                 184 	| COMCAST-7922                                             	|
+| 17676 	|  70163968 	|                 781 	| EWORLD-AS-PK-AP                                          	|
+|  4766 	|  69298208 	|                2542 	| Korea Telecom                                            	|
+|  4837 	|  58777856 	|                 869 	| CHINA169-Backbone                                        	|
+|  3356 	|  58003136 	|                1491 	| Level 3 Parent                                           	|
+|  9808 	|  57068032 	|                2569 	| China Mobile                                             	|
+|   714 	|  47885056 	|                 966 	| APPLE-ENGINEERING                                        	|
+|   701 	|  44234752 	|                1081 	| MCI Communications Services, Inc. d/b/a Verizon Business 	|
+|  9394 	|  43384576 	|                2150 	| Generation IT                                            	|
+|  8075 	|  38174976 	|                 220 	| MICROSOFT-CORP-MSN-AS-BLOCK                              	|
+|  4538 	|  36675584 	|                5073 	| China Education and Research Network Center              	|
  
 [^1]: Data provided by Caida http://data.caida.org/datasets/routing/routeviews-prefix2as/
- 
-The internet has grown exponentially, with the current global routing table standing at 883483 routes for IPv4 and 100521 for IPv6 (26/10/2020).
+This was created using a small snippit of code
+```python
+import gzip
+import ipaddress
+import pandas
+def count_hosts(prefix):
+    if ":" in prefix:
+        v6_net = ipaddress.IPv6Network(prefix)
+        return v6_net.num_addresses, v6_net.version
+    else:
+        v4_net = ipaddress.IPv4Network(prefix)
+        return v4_net.num_addresses, v4_net.version
+if __name__ == "__main__":
+    data = []
+    with gzip.open("routeviews-rv2-20201101-1200.pfx2as.gz") as inputFile:
+        for line in inputFile:
+            line = line.decode("UTF-8")
+            prefix, cidr, asn = line.split("\t", 3)
+            asn = asn.strip()
+            prefix = f"{prefix}/{cidr}"
+            data.append([prefix, asn])
+    df = pandas.DataFrame(data, columns=['Prefix', 'ASN'])
+    df['Hosts'], df['Version'] = zip(*df['Prefix'].apply(count_hosts))
+    agg = df.groupby('ASN')['Hosts'].agg(['sum','count'])
+    agg.sort_values(by='sum', ascending=False).to_csv('agg_2020.csv')
+```
+The internet has grown exponentially, with the current global routing table standing at 883483 routes for IPv4 and 100521 for IPv6 (26/10/2020). So let's have a look at the main transit forces in the new world.
  
 # Who are the new big boys on the block
 I wanted to find out who the biggest Tier 1 networks are, and, if using BGP would be an ample way of deciding this. If you know about BGP, you know how different autonomous systems peer and exchange data. BGP is great because you can see who owns which IP Prefixes, you can see IPv6 uptake, rPKI uptake etc. 
