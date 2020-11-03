@@ -101,8 +101,61 @@ TABLE_DUMP2|26/10/20 18:36:13|B|206.24.210.80|3561|1.0.0.0/24|3561 209 3356 1333
 The path attribute (3561 209 3356 13335) is all the autonomous systems this advertisement passed through. The experiment will work out, if analysed in bulk, could we use AS_PATH to find the most common transmitted ASN.
  
 ## The Code
-Routeviews very kindly offer all of their collectors BGP tables every 2 hours. I wrote some code in GoLang to pull down some* of the routeviews collectors from 26/10/2020 at 00:00. Parse them from the compressed MRT data format of BGPDUMP (using Isolario BGPScanner) and push them to a PostgreSQL database.
- 
+Routeviews very kindly offer all of their collectors BGP tables every 2 hours. I wrote some code in GoLang to pull down some* of the routeviews collectors from 26/10/2020 at 00:00. Parse them from the compressed MRT data format of BGPDUMP (using Isolario BGPScanner) and push them to a PostgreSQL database. It's viewable on my github page here: https://github.com/WhatATragedy/KaleBlazer. 
+I played around with some GoLang concepts as it was my first time using GoLang and I was pleasntly suprrised. I toyed around with worker and master logic which uses channels and the such (very GoLang) and managed to get that working! But in the end reverted to a goroutine per routeview collector to make it easier to manage for now while developing. So it looks something like this.
+
+```go
+ribHandler.l.Println("[Main] Welcome To Kale Blazer Reborn...")
+	ribHandler.GetCollectors()
+	ribHandler.l.Println("[Main] Finished Getting Collectors")
+	postgresConnector := ribHandler.connectPostgres(ribHandler.l)
+	err := ribHandler.createPostgresTable(postgresConnector)
+	if err != nil {
+		panic(err)
+	}
+	sem := make(chan struct{}, 10)
+	var wg sync.WaitGroup
+	taskNum := 0 
+	for i, collectorName := range ribHandler.collectors {
+		wg.Add(1)
+		latestCollection := ribHandler.LatestCollection(collectorName)
+		go ribHandler.getFile(&wg, collectorName, latestCollection, postgresConnector, sem)
+		taskNum++		
+	}
+	wg.Wait()
+	ribHandler.l.Printf("[Main] Completed %v Tasks..\n", taskNum)
+	ribHandler.l.Println("[Main] Done Collecting Files...")
+```
+
+Worker logic looks a bit different, an example is here
+```go
+func (ribHandler *RibHandler) createWorkerPool(noOfWorkers int, jobChannel chan string, postgresChan chan string) {
+	var wg sync.WaitGroup
+	for i := 0; i < noOfWorkers; i++ {
+		go parseBGPFile(i, &wg, jobChannel, postgresChan)
+	}
+	wg.Add(len(jobChannel))
+     wg.Wait()
+     
+//create worker pools and parse it the channel so they can read from it when needed (5 jobs created.)
+ribHandler.createWorkerPool(5, parseJobChan, postgresChan)
+var wg sync.WaitGroup
+for i, collectorName := range ribHandler.collectors {
+     latestCollection := ribHandler.LatestCollection(collectorName)
+     ribHandler.l.Printf("%v Latest Collection %v\n", collectorName, latestCollection)
+     go ribHandler.getFile(&wg, collectorName, latestCollection, parseJobChan)
+     if i > 5 {
+          break
+     }
+}
+wg.Wait()
+ribHandler.l.Printf("Wrote %v Tasks..\n", i)
+//close the channel when all files have been collected as filepaths should have been pushed
+close(parseJobChan)
+```
+
+If you're interested, browse the code, worker logic is commit [cae152efeac9fcc0333dda908e9831407c8a88a2](https://github.com/WhatATragedy/KaleBlazer/tree/cae152efeac9fcc0333dda908e9831407c8a88a2) and the current commits are a single Goroutine.
+
 ## Cool, what does the table look like?
  
 ```sql
