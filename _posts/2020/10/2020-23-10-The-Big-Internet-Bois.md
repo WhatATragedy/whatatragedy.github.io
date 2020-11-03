@@ -144,9 +144,6 @@ for i, collectorName := range ribHandler.collectors {
      latestCollection := ribHandler.LatestCollection(collectorName)
      ribHandler.l.Printf("%v Latest Collection %v\n", collectorName, latestCollection)
      go ribHandler.getFile(&wg, collectorName, latestCollection, parseJobChan)
-     if i > 5 {
-          break
-     }
 }
 wg.Wait()
 ribHandler.l.Printf("Wrote %v Tasks..\n", i)

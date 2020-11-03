@@ -2,7 +2,9 @@
 layout: article
 title: Who Has Your Advertising Data
 date: 2020-07-08 09:39:00+0200
+coverPhoto: /contents/images/2020/07/DatabutBig.PNG
 ---
+![](/contents/images/2020/07/DatabutBig.PNG)
 ## Introduction
 During my time working from home, I was browing [Hacker News](https://news.ycombinator.com/), it's a great site that has some great information on it if you can get over the hideous UI. I stumbled on something called 'Malvertising', the post I came across is a few months old and I have only just got around to doing a writeup, so I've since lost it. You can read about it here though [https://blog.eccouncil.org/malvertising-what-it-is-and-how-to-avoid-it/](https://blog.eccouncil.org/malvertising-what-it-is-and-how-to-avoid-it/). 
 
