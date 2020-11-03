@@ -7,21 +7,21 @@ coverPhoto: /contents/images/2020/10/Internet_Bois.png
 ![](/contents/images/2020/10/Internet_Bois.png)
 # Once Upon a time on the Internet
 Back long ago, the internet was quite small and made of HTML pages. A lot has changed since then. If we have a look back at Routeviews IP to Prefix mapping from 2005, we can see who some of the bigger ISPs were back then.
-
+ 
 ADD Some DATA Here from http://data.caida.org/datasets/routing/routeviews-prefix2as/2005/12/
-
+ 
 [^1]: Data provided by Caida http://data.caida.org/datasets/routing/routeviews-prefix2as/
-
-The internet has grown exponentionally, with the current global routing table standing at 883483 routes for IPv4 and 100521 for IPv6 (26/10/2020).
-
+ 
+The internet has grown exponentially, with the current global routing table standing at 883483 routes for IPv4 and 100521 for IPv6 (26/10/2020).
+ 
 # Who are the new big boys on the block
-I wanted to find out, who the biggest Tier 1 networks are, and, if using BGP would be an ample way of deciding this. If you know about BGP, you know it's how different autonomous systems peer and exchange data. BGP is great becuase you can see who owns which IP Prefixes, you can see IPv6 uptake, rPKI uptake etc. 
+I wanted to find out who the biggest Tier 1 networks are, and, if using BGP would be an ample way of deciding this. If you know about BGP, you know how different autonomous systems peer and exchange data. BGP is great because you can see who owns which IP Prefixes, you can see IPv6 uptake, rPKI uptake etc. 
 BGP does have limits though. I am looking to find out who the biggest transit providers are in the world, basically, who is handling the most data. BGP tells us about who is peering, but not how much traffic is being exchanged. For example using BGP we have no idea the load that is on the peering links and the bandwidth. 
-
+ 
 ## The Experiment
 #### Can we use AS_PATHs in order to find out who is carrying the most traffic globally?
-If you have seen BGP TABLE DUMPs, you know there are AS PATHs in BGP advertisments. If you telnet to a routeviews project and do "show bgp all" you should see this.
-
+If you have seen BGP TABLE DUMPs, you know there are AS PATHs in BGP advertisements. If you telnet to a routeviews project and do "show bgp all" you should see this.
+ 
 ```cisco
 route-views>show bgp all
 For address family: IPv4 Unicast
@@ -36,30 +36,30 @@ This is converted to a BGP DUMP format that looks like this -
 ```cisco
 TABLE_DUMP2|26/10/20 18:36:13|B|206.24.210.80|3561|1.0.0.0/24|3561 209 3356 13335|IGP
 ```
-
-The path attribute (3561 209 3356 13335) is all the autonmous systems this advertisment passed through. The experiment will work out, if analysed in bulk, could we use AS_PATH to find the most common transitted ASN.
-
+ 
+The path attribute (3561 209 3356 13335) is all the autonomous systems this advertisement passed through. The experiment will work out, if analysed in bulk, could we use AS_PATH to find the most common transmitted ASN.
+ 
 ## The Code
-Routeviews very kindly offer all of their collectors BGP tables every 2 hours. I wrote some code in GoLang to pull down some* of the routeviews collectors from 26/10/2020 at 00:00. Parse them from the compressed MRT data format of BGPDUMP (using Isolario BGPScanner) and push them to an PostgreSQL database.
-
+Routeviews very kindly offer all of their collectors BGP tables every 2 hours. I wrote some code in GoLang to pull down some* of the routeviews collectors from 26/10/2020 at 00:00. Parse them from the compressed MRT data format of BGPDUMP (using Isolario BGPScanner) and push them to a PostgreSQL database.
+ 
 ## Cool, what does the table look like?
-
+ 
 ```sql
 CREATE UNLOGGED TABLE ribs (
-		Prefix INET,
-		ASPath bigint[],
-		OriginatingIP INET,
-		OriginatingASN bigint,
-		SourceRIB TEXT,
-		OriginatingDatetime TIMESTAMP
-	) PARTITION BY RANGE ( originatingasn );
-	CREATE TABLE records_0 PARTITION OF ribs
-			FOR VALUES FROM (0) TO (1000);
-	CREATE TABLE records_1000 PARTITION OF ribs
-			FOR VALUES FROM (1000) TO (2000);
+          Prefix INET,
+          ASPath bigint[],
+          OriginatingIP INET,
+          OriginatingASN bigint,
+          SourceRIB TEXT,
+          OriginatingDatetime TIMESTAMP
+     ) PARTITION BY RANGE ( originatingasn );
+     CREATE TABLE records_0 PARTITION OF ribs
+               FOR VALUES FROM (0) TO (1000);
+     CREATE TABLE records_1000 PARTITION OF ribs
+               FOR VALUES FROM (1000) TO (2000);
 ```
-
-I created the table initially, and realised I had a ton of rows and therefore my queries were taking ages. This led to me having to partition the table. This means the postgres can parrellelise my queries a lot better over all the tables which speeds up queries massively, I haven't included all the partitions here but there are 18 partitions currently.
+ 
+I created the table initially, and realised I had a ton of rows and therefore my queries were taking ages. This led to me having to partition the table. This means the postgres can parallelize my queries a lot better over all the tables which speeds up queries massively. I haven't included all the partitions here but there are 18 partitions now.
 Here is an example of the collectors that I had ingester
 ```sql
 routing_information=# SELECT DISTINCT source_rib FROM ribs;
@@ -75,9 +75,9 @@ routing_information=# SELECT DISTINCT source_rib FROM ribs;
  route-views.amsix-rib
  route-views.chile-rib
 ```
-
+ 
 ## The querying 
-So, the process I was going to use to find out the biggest transit provider was just to find out the ASN that's seen most in the AS PATH. SO I wrote some SQL to do that. Postgres has an EXPLAIN ANALYSE function that tells you how your query will run and the time it's esitmated to take, so I did that because I need to expand out the AS_PATH column.
+So, the process I was going to use to find out the biggest transit provider was just to find out the ASN that's seen most in the AS PATH. SO I wrote some SQL to do that. Postgres has an EXPLAIN ANALYSE function that tells you how your query will run and the time it's estimated to take, so I did that because I need to expand out the AS_PATH column.
 ```sql
 routing_information=# EXPLAIN ANALYSE  SELECT COUNT(*) as count, arrayaspath from (SELECT unnest(as_path, E' ') as arrayaspath FROM ribs) pathasns GROUP BY arrayaspath ORDER BY count DESC;
                                                                                       QUERY PLAN                                                                                      
@@ -142,41 +142,45 @@ routing_information=# EXPLAIN ANALYSE  SELECT COUNT(*) as count, arrayaspath fro
  Execution Time: 1569794.354 ms
 ```
 This query gives me a nice list of something like this 
-| index 	| Count    	| ASN  	|
-|-------	|----------	|------	|
-| 0     	| 19309411 	| 6939 	|
-| 1     	| 18351608 	| 3356 	|
-| 2     	| 16863414 	| 1299 	|
-| 3     	| 11309279 	| 174  	|
-
+| index   | Count        | ASN     |
+|-------  |----------    |------   |
+| 0       | 19309411     | 6939    |
+| 1       | 18351608     | 3356    |
+| 2       | 16863414     | 1299    |
+| 3       | 11309279     | 174     |
+ 
 Just eyeballing this, it looks reasonable, 6939 is HE, 3356 level 3, 1299 Telia and 174 Cogent, which does nicely look similar to [Caida](https://asrank.caida.org/).
-
+ 
 I wrote a quick python script to query this and used my [HailBlazer](https://github.com/WhatATragedy/HailBlazer) endpoint to enrich with ASN names. Which produced this.
-
-| Index 	| Count    	| arrayaspath 	| name                                            	|
-|-------	|----------	|-------------	|-------------------------------------------------	|
-|     0 	| 19309411 	|        6939 	| HURRICANE                                       	|
-|     1 	| 18351608 	|        3356 	| LEVEL3                                          	|
-|     2 	| 16863414 	|        1299 	| TELIANET Telia Company AB                       	|
-|     3 	| 11309279 	|         174 	| COGENT-174                                      	|
-|     4 	| 10541619 	|        2914 	| NTT-COMMUNICATIONS-2914                         	|
-|     5 	|  9007172 	|        3257 	| GTT-BACKBONE GTT Communications Inc.            	|
-|     6 	|  6461046 	|       58511 	| ANYCAST-GLOBAL-BACKBONE Anycast Global Backbone 	|
-|     7 	|  5910483 	|        6453 	| AS6453                                          	|
-|     8 	|  5310383 	|         209 	| CENTURYLINK-US-LEGACY-QWEST                     	|
-|     9 	|  4244612 	|        7545 	| TPG-INTERNET-AP TPG Telecom Limited             	|
-|    10 	|  4209766 	|       39120 	| CONVERGENZE-AS Convergenze S.p.A.               	|
-|    11 	|  4141897 	|        6461 	| ZAYO-6461                                       	|
-|    12 	|  3980431 	|        3491 	| BTN-ASN                                         	|
-|    13 	|  3589007 	|        6762 	| SEABONE-NET TELECOM ITALIA SPARKLE S.p.A.       	|
-|    14 	|  3257376 	|       16552 	| TIGGEE                                          	|
-|    15 	|  3248613 	|        6830 	| LibertyGlobal Liberty Global B.V.               	|
-|    16 	|  3089704 	|        4637 	| ASN-TELSTRA-GLOBAL Telstra Global               	|
-|    17 	|  2834779 	|         293 	| ESNET                                           	|
-|    18 	|  2562372 	|       52320 	| GlobeNet Cabos Submarinos Colombia, S.A.S.      	|
-|    19 	|  2515635 	|      199524 	| GCORE G-Core Labs S.A.                          	|
-|    20 	|  2502649 	|       42541 	| FIBERBY Fiberby ApS                             	|
-
-
-Nice, the table looks okay and comparing it to Caida, the top ASNs are definitely there. I've got a few issues here, like Hurricane Electric being so high on the graph but the reason for this is probably because they have a lot of BGP peers, but not a lot of throughput. I would much rather use traceroute data to create a table like this as it will show path actuality for various prefix's instead of reachability. But that is for another blog!
+ 
+| Index   | Count        | arrayaspath  | name                                                 |
+|-------  |----------    |------------- |-------------------------------------------------     |
+|     0   | 19309411     |        6939  | HURRICANE                                            |
+|     1   | 18351608     |        3356  | LEVEL3                                               |
+|     2   | 16863414     |        1299  | TELIANET Telia Company AB                            |
+|     3   | 11309279     |         174  | COGENT-174                                           |
+|     4   | 10541619     |        2914  | NTT-COMMUNICATIONS-2914                              |
+|     5   |  9007172     |        3257  | GTT-BACKBONE GTT Communications Inc.                 |
+|     6   |  6461046     |       58511  | ANYCAST-GLOBAL-BACKBONE Anycast Global Backbone      |
+|     7   |  5910483     |        6453  | AS6453                                               |
+|     8   |  5310383     |         209  | CENTURYLINK-US-LEGACY-QWEST                          |
+|     9   |  4244612     |        7545  | TPG-INTERNET-AP TPG Telecom Limited                  |
+|    10   |  4209766     |       39120  | CONVERGENZE-AS Convergenze S.p.A.                    |
+|    11   |  4141897     |        6461  | ZAYO-6461                                            |
+|    12   |  3980431     |        3491  | BTN-ASN                                              |
+|    13   |  3589007     |        6762  | SEABONE-NET TELECOM ITALIA SPARKLE S.p.A.            |
+|    14   |  3257376     |       16552  | TIGGEE                                               |
+|    15   |  3248613     |        6830  | LibertyGlobal Liberty Global B.V.                    |
+|    16   |  3089704     |        4637  | ASN-TELSTRA-GLOBAL Telstra Global                    |
+|    17   |  2834779     |         293  | ESNET                                                |
+|    18   |  2562372     |       52320  | GlobeNet Cabos Submarinos Colombia, S.A.S.           |
+|    19   |  2515635     |      199524  | GCORE G-Core Labs S.A.                               |
+|    20   |  2502649     |       42541  | FIBERBY Fiberby ApS                                  |
+ 
+ 
+Nice, the table looks okay and comparing it to Caida, the top ASNs are definitely there. I've got a few issues here, like Hurricane Electric being so high on the graph but the reason for this is probably because they have a lot of BGP peers, but not a lot of throughput. There is also ASN 58511 (Anycast-Global) but this is probably because CDN and anycast providers advertise to a lot of upstreams in order to ensure availability of service. This means they will be in a lot of ASPATHs.
+ 
+ I would much rather use traceroute data to create a table like this as it will show path actuality for various prefixes instead of reachability. But that is for another blog!
+ 
+ 
 
