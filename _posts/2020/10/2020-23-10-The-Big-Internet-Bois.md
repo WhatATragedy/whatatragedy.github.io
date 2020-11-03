@@ -102,7 +102,7 @@ The path attribute (3561 209 3356 13335) is all the autonomous systems this adve
  
 ## The Code
 Routeviews very kindly offer all of their collectors BGP tables every 2 hours. I wrote some code in GoLang to pull down some* of the routeviews collectors from 26/10/2020 at 00:00. Parse them from the compressed MRT data format of BGPDUMP (using Isolario BGPScanner) and push them to a PostgreSQL database. It's viewable on my github page here: https://github.com/WhatATragedy/KaleBlazer. 
-I played around with some GoLang concepts as it was my first time using GoLang and I was pleasntly suprrised. I toyed around with worker and master logic which uses channels and the such (very GoLang) and managed to get that working! But in the end reverted to a goroutine per routeview collector to make it easier to manage for now while developing. So it looks something like this.
+I played around with some GoLang concepts as it was my first time using GoLang and I was pleasantly surprised. I toyed around with worker and master logic which uses channels and such (very GoLang) and managed to get that working! But in the end reverted to a goroutine per routeview collector to make it easier to manage for now while developing. So it looks something like this.
 
 ```go
 ribHandler.l.Println("[Main] Welcome To Kale Blazer Reborn...")
