@@ -2,9 +2,9 @@
 layout: article
 title: Creating a RPi VPN Gateway
 date: 2020-04-28 09:39:00+0200
-coverPhoto: /contents/images/2020/04/Ra_Pi.jpg
+coverPhoto: /contents/images/2020/04/Ra_Pi_Compressed.jpg
 ---
-![](/contents/images/2020/04/Ra_Pi.jpg)
+![](/contents/images/2020/04/Ra_Pi_Compressed.jpg)
 ## Intro 
 With everyone working from home more, I set up a dedicated VPN to use with my work IT. This doesn't give me much really, but in my mind, work traffic going over a VPN I control is more trusted by me.
 My work VPN is currently being run on AWS, so my plan was to get a dedicated VPN to AWS, where my work traffic will then be handled inside the AWS Autonomous System (Presumably
