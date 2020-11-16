@@ -135,7 +135,6 @@ When in the file, the following lines are used to setup our client and server
 [Interface]
 Address = 10.0.0.1/24 # This gives our server an IP in the pipe
 Address = fd86:ea04:1115::1/64 #same as above but IPv6
-SaveConfig = true
 PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 #The post Ups and Downs just adds the NAT rules for if the wireguard services comes up or down, basically if WG is up it will NAT, otherwise don't NAT
@@ -358,9 +357,54 @@ google.com.             204     IN      A       216.58.210.46
  
 You're all done, your very own end to end VPN/Adblocking/DoH Gateway. We have ended up with something like this.
 What we have made is something like this
-![](/contents/images/2020/04/Diagram.png)
+![](/contents/images/2020/04/Diagram.PNG)
  
 This shows we are encrypted when leaving our ISP, so they cannot sniff traffic. We also are not directly connected to the internet and therefore, nobody knows where we have come from. It instead looks like you have come from an Amazon EC2 in this instance.
+
+## Adding individual clients
+I can hear you now, saying, Alex, what if I want to add an individual client to the server. Well, that's simple enough. You first have to update your wg0 conf to accept a new peer, and then generate the client conf.
+
+```bash
+cd /etc/wireguard
+#Let's add a new peer to our wg0 conf
+#Change the names to be more descriptive
+sudo mkdir -p /etc/wireguard/clients; wg genkey | sudo tee /etc/wireguard/clients/samsungs10.key | wg pubkey | sudo tee /etc/wireguard/clients/samsungs10.key.pub
+#Let's add the new peer to our wg0 conf
+#Append another peer block to the bottom 
+sudo nano /etc/wireguard/wg0.conf
+
+[Peer]
+PublicKey = <CLIENT PUBLIC KEY>
+AllowedIps = 10.0.0.4/32
+
+
+sed -i "s/<CLIENT PUBLIC KEY>/$(sed 's:/:\\/:g' clients/samsungs10.key.pub)/" wg0.conf
+
+
+
+sudo nano /etc/wireguard/clients/samsungs10.conf
+
+[Interface]
+PrivateKey = <CLIENT PRIVATE KEY>
+Address = 10.0.0.5/24
+DNS = 10.0.0.1
+
+[Peer]
+PublicKey = <SERVER PUBLIC KEY>
+AllowedIPs = 0.0.0.0/0
+Endpoint = <SERVER PUBLIC IP>:51820
+
+sed -i "s/<SERVER PUBLIC KEY>/$(sed 's:/:\\/:g' server_public.key)/" clients/samsungs10.conf
+sed -i "s/<CLIENT PRIVATE KEY>/$(sed 's:/:\\/:g' clients/samsungs10.key)/" clients/samsungs10.conf
+sed -i "s/<SERVER PUBLIC IP>/$(curl ifconfig.co)/g" clients/samsungs10.conf
+
+## You should now have a new conf file with your keys all done. You can manually add these to programs or for phones or tablets used qrcodes.
+sudo apt install qrencode
+qrencode -t ansiutf8 < /etc/wireguard/clients/samsungs10.conf
+```
+Done
+
+
  
  
  
